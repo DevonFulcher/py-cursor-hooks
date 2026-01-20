@@ -67,7 +67,9 @@ Add your hooks to `~/.cursor/hooks.json`:
 {
   "version": 1,
   "hooks": {
-    "beforeReadFile": [{ "command": "cursor-hooks --hook beforeReadFile" }]
+    "beforeReadFile": [
+      { "command": "uvx --from /absolute/path/to/your/project python -m hooks.run --hook beforeReadFile" }
+    ]
   }
 }
 ```

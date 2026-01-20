@@ -32,12 +32,12 @@ def load_hooks() -> CursorHooks:
     Requires exactly one entry point registered in group `py_cursor_hooks.hooks`.
     """
     eps = list(entry_points().select(group=ENTRYPOINT_GROUP))
-    if len(eps) == 1:
-        return _coerce_to_hooks(eps[0].load())
     if len(eps) == 0:
         raise RuntimeError(
             f'No hook implementation found. Register an entry point in group "{ENTRYPOINT_GROUP}".'
         )
+    if len(eps) == 1:
+        return _coerce_to_hooks(eps[0].load())
     raise RuntimeError(
         f'Multiple hook implementations found in entry point group "{ENTRYPOINT_GROUP}".'
     )

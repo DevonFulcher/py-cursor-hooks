@@ -9,9 +9,6 @@ dependencies = [
     "typer>=0.12",
 ]
 
-[project.scripts]
-cursor-hooks = "hooks.main:app"
-
 [project.optional-dependencies]
 dev = [
     "pytest>=8",

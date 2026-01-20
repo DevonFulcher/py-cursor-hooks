@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from typer.testing import CliRunner
 
-from hooks.main import app
+from hooks.run import app
 
 runner = CliRunner()
 
@@ -25,7 +25,7 @@ class TestCliIntegration:
             }
         )
 
-        with patch("hooks.main.load_hooks") as mock_load:
+        with patch("hooks.run.load_hooks") as mock_load:
             from hooks.interfaces import CursorHooks
 
             mock_load.return_value = CursorHooks()
@@ -37,7 +37,7 @@ class TestCliIntegration:
             assert output == {}
 
     def test_cli_errors_on_invalid_json(self) -> None:
-        with patch("hooks.main.load_hooks") as mock_load:
+        with patch("hooks.run.load_hooks") as mock_load:
             from hooks.interfaces import CursorHooks
 
             mock_load.return_value = CursorHooks()
@@ -55,7 +55,7 @@ class TestCliIntegration:
             }
         )
 
-        with patch("hooks.main.load_hooks") as mock_load:
+        with patch("hooks.run.load_hooks") as mock_load:
             from hooks.interfaces import CursorHooks
 
             mock_load.return_value = CursorHooks()
