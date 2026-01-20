@@ -1,0 +1,61 @@
+version: "3"
+
+tasks:
+  install:
+    desc: Install dependencies
+    cmds:
+      - uv sync --all-extras
+
+  test:
+    desc: Run tests
+    cmds:
+      - uv run pytest {{.CLI_ARGS}}
+
+  lint:
+    desc: Run linter
+    cmds:
+      - uv run ruff check .
+
+  lint:fix:
+    desc: Run linter with auto-fix
+    cmds:
+      - uv run ruff check --fix .
+
+  format:
+    desc: Check formatting
+    cmds:
+      - uv run ruff format --check .
+
+  format:fix:
+    desc: Fix formatting
+    cmds:
+      - uv run ruff format .
+
+  typecheck:
+    desc: Run type checker
+    cmds:
+      - uv run mypy src
+
+  check:
+    desc: Run all checks
+    cmds:
+      - task: lint
+      - task: format
+      - task: typecheck
+      - task: test
+
+  fix:
+    desc: Fix all auto-fixable issues
+    cmds:
+      - task: lint:fix
+      - task: format:fix
+
+  pre-commit:install:
+    desc: Install pre-commit hooks
+    cmds:
+      - uv run pre-commit install
+
+  pre-commit:run:
+    desc: Run pre-commit on all files
+    cmds:
+      - uv run pre-commit run --all-files

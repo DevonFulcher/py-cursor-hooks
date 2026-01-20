@@ -4,7 +4,7 @@ A typed Python Library for building [Cursor hooks](https://cursor.com/docs/agent
 
 ## Why use this?
 
-Cursor runs hooks as subprocesses and communicates via JSON on stdin/stdout. Without this SDK, you'd need to manually parse JSON, validate inputs, and format responses. With it, you get:
+Cursor runs hooks as subprocesses and communicates via JSON on stdin/stdout. Without this SDK, you'd need to write shell scripts that manually parse JSON, validate inputs, and format responses. With it, you get to write Python and:
 
 - **Pydantic models** for all hook inputs and outputs
 - **Type-safe interfaces** that catch errors before runtime

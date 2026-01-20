@@ -31,7 +31,7 @@ def load_hooks() -> CursorHooks:
 
     Requires exactly one entry point registered in group `py_cursor_hooks.hooks`.
     """
-    eps = entry_points().select(group=ENTRYPOINT_GROUP)
+    eps = list(entry_points().select(group=ENTRYPOINT_GROUP))
     if len(eps) == 1:
         return _coerce_to_hooks(eps[0].load())
     if len(eps) == 0:
