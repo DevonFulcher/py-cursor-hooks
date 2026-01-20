@@ -1,6 +1,6 @@
 [project]
 name = "py-cursor-hooks"
-version = "0.1.0"
+version = "0.1.1"
 description = "A typed Python SDK for building Cursor hooks"
 readme = "README.md"
 requires-python = ">=3.14"
