@@ -1,32 +1,59 @@
+import argparse
 import sys
-from typing import Annotated
-
-import typer
+from typing import TextIO
 
 from hooks import models
 from hooks.loader import load_hooks
 from hooks.runner import build_hook_table, dispatch
 
-app = typer.Typer(add_completion=False)
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Run a Cursor hook.")
+    parser.add_argument(
+        "--hook",
+        required=True,
+        choices=[event.value for event in models.HookEvent],
+        help="Hook event name (e.g. beforeShellExecution).",
+    )
+    return parser
 
 
-@app.command()
-def run(
+def run_hook(
+    hook: models.HookEvent,
     *,
-    hook: Annotated[
-        models.HookEvent,
-        typer.Option("--hook", help="Hook event name (e.g. beforeShellExecution)."),
-    ],
-) -> None:
+    stdin: TextIO,
+    stdout: TextIO,
+    stderr: TextIO,
+) -> int:
     """Run a Cursor hook with JSON input from stdin."""
-    hooks_impl = load_hooks()
-    hook_table = build_hook_table(hooks_impl)
+    try:
+        hooks_impl = load_hooks()
+        hook_table = build_hook_table(hooks_impl)
 
-    raw = sys.stdin.read()
-    out_model = dispatch(hook_table=hook_table, raw_json=raw, hook=hook)
+        raw = stdin.read()
+        out_model = dispatch(hook_table=hook_table, raw_json=raw, hook=hook)
 
-    sys.stdout.write(out_model.to_json_line())
+        stdout.write(out_model.to_json_line())
+    except Exception as exc:  # noqa: BLE001
+        stderr.write(f"{exc}\n")
+        return 1
+
+    return 0
+
+
+def main() -> int:
+    """Run a Cursor hook with JSON input from stdin."""
+    parser = _build_parser()
+
+    args = parser.parse_args()
+
+    return run_hook(
+        models.HookEvent(args.hook),
+        stdin=sys.stdin,
+        stdout=sys.stdout,
+        stderr=sys.stderr,
+    )
 
 
 if __name__ == "__main__":
-    app()
+    sys.exit(main())

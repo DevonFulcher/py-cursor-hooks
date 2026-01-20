@@ -1,17 +1,51 @@
 """Tests for CLI input handling."""
 
+import contextlib
+import io
 import json
+import sys
 from unittest.mock import patch
 
-from typer.testing import CliRunner
-
-from hooks.run import app
-
-runner = CliRunner()
+from hooks import models, run
 
 
 class TestCliIntegration:
     """Integration tests for the CLI."""
+
+    def _invoke_run_hook(
+        self, hook: models.HookEvent, input_text: str
+    ) -> tuple[int, str, str]:
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        stdin = io.StringIO(input_text)
+        exit_code = run.run_hook(
+            hook,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
+        )
+        return exit_code, stdout.getvalue(), stderr.getvalue()
+
+    def _invoke_main(self, args: list[str], input_text: str) -> tuple[int, str, str]:
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        stdin = io.StringIO(input_text)
+        with (
+            contextlib.redirect_stdout(stdout),
+            contextlib.redirect_stderr(stderr),
+        ):
+            original_argv = sys.argv
+            original_stdin = sys.stdin
+            sys.argv = ["run", *args]
+            sys.stdin = stdin
+            try:
+                exit_code = run.main()
+            except SystemExit as exc:
+                exit_code = int(exc.code) if exc.code is not None else 1
+            finally:
+                sys.argv = original_argv
+                sys.stdin = original_stdin
+        return exit_code, stdout.getvalue(), stderr.getvalue()
 
     def test_cli_reads_from_stdin(self) -> None:
         json_input = json.dumps(
@@ -30,10 +64,13 @@ class TestCliIntegration:
 
             mock_load.return_value = CursorHooks()
 
-            result = runner.invoke(app, ["--hook", "stop"], input=json_input)
+            exit_code, output, _ = self._invoke_run_hook(
+                models.HookEvent.stop,
+                json_input,
+            )
 
-            assert result.exit_code == 0
-            output = json.loads(result.stdout.strip())
+            assert exit_code == 0
+            output = json.loads(output.strip())
             assert output == {}
 
     def test_cli_errors_on_invalid_json(self) -> None:
@@ -42,9 +79,12 @@ class TestCliIntegration:
 
             mock_load.return_value = CursorHooks()
 
-            result = runner.invoke(app, ["--hook", "stop"], input="not valid json")
+            exit_code, _, _ = self._invoke_run_hook(
+                models.HookEvent.stop,
+                "not valid json",
+            )
 
-            assert result.exit_code != 0
+            assert exit_code != 0
 
     def test_cli_errors_on_unknown_hook(self) -> None:
         json_input = json.dumps(
@@ -60,12 +100,12 @@ class TestCliIntegration:
 
             mock_load.return_value = CursorHooks()
 
-            result = runner.invoke(app, ["--hook", "fakeHook"], input=json_input)
+            exit_code, _, _ = self._invoke_main(["--hook", "fakeHook"], json_input)
 
-            assert result.exit_code != 0
+            assert exit_code != 0
 
     def test_cli_requires_hook_option(self) -> None:
         """--hook is required."""
-        result = runner.invoke(app, input="{}")
-        assert result.exit_code != 0
-        assert "--hook" in result.output
+        exit_code, _, stderr = self._invoke_main([], "{}")
+        assert exit_code != 0
+        assert "--hook" in stderr
